@@ -1,0 +1,231 @@
+const TaxpayerProfileModel = require("../models/taxpayerProfileModel");
+const MinimumTaxRuleModel = require("../models/minimumTaxRuleModel");
+
+const TaxpayerProfileService = {
+
+  async createProfile(userId, data) {
+    if (!userId) {
+      throw new Error("User ID is required");
+    }
+
+    const profileData = await this.validateProfileData(data);
+
+    const exists = await TaxpayerProfileModel.profileExists(userId);
+
+    if (exists) {
+      throw new Error("Taxpayer profile already exists");
+    }
+
+    return await TaxpayerProfileModel.createProfile({
+      user_id: userId,
+      date_of_birth: profileData.date_of_birth,
+      gender: profileData.gender,
+      minimum_tax_area: profileData.minimum_tax_area,
+      is_new_taxpayer: profileData.is_new_taxpayer,
+      is_physically_challenged: profileData.is_physically_challenged,
+      disabled_child_dependents: profileData.disabled_child_dependents,
+      is_freedom_fighter: profileData.is_freedom_fighter,
+      is_july_warrior: profileData.is_july_warrior,
+      net_wealth: profileData.net_wealth,
+      has_multiple_motor_vehicles: profileData.has_multiple_motor_vehicles,
+      has_large_house_property: profileData.has_large_house_property,
+      tds_amount: profileData.tds_amount,
+      advance_tax_amount: profileData.advance_tax_amount,
+    });
+  },
+
+
+  async getProfile(userId) {
+    if (!userId) {
+      throw new Error("User ID is required");
+    }
+
+    return await TaxpayerProfileModel.getProfileByUserId(userId);
+  },
+
+
+  async updateProfile(userId, data) {
+    if (!userId) {
+      throw new Error("User ID is required");
+    }
+
+    const profileData = await this.validateProfileData(data);
+
+    const exists = await TaxpayerProfileModel.profileExists(userId);
+
+    if (!exists) {
+      throw new Error("Taxpayer profile not found");
+    }
+
+    return await TaxpayerProfileModel.updateProfile(userId, profileData);
+  },
+
+
+  async validateProfileData(data) {
+    if (!data || typeof data !== "object" || Array.isArray(data)) {
+      throw new Error("Profile data is required");
+    }
+
+
+    if (
+      data.date_of_birth === undefined ||
+      data.date_of_birth === null ||
+      String(data.date_of_birth).trim() === ""
+    ) {
+      throw new Error("Date of birth is required");
+    }
+
+    const dateOfBirth = new Date(data.date_of_birth);
+
+    if (Number.isNaN(dateOfBirth.getTime())) {
+      throw new Error("Invalid date of birth");
+    }
+
+    const today = new Date();
+
+    today.setHours(0, 0, 0, 0);
+
+    dateOfBirth.setHours(0, 0, 0, 0);
+
+    if (dateOfBirth > today) {
+      throw new Error("Date of birth cannot be in the future");
+    }
+
+
+    if (
+      data.gender === undefined ||
+      data.gender === null ||
+      String(data.gender).trim() === ""
+    ) {
+      throw new Error("Gender is required");
+    }
+
+    const gender = String(data.gender).trim().toUpperCase();
+
+    const allowedGenders = [
+      "MALE",
+      "FEMALE",
+      "THIRD_GENDER",
+    ];
+
+    if (!allowedGenders.includes(gender)) {
+      throw new Error(
+        "Invalid gender. Allowed values are MALE, FEMALE and THIRD_GENDER.",
+      );
+    }
+
+    // database driven
+
+    // database driven area check with graceful fallback
+    const minimumTaxArea =
+      data.minimum_tax_area === undefined ||
+        data.minimum_tax_area === null ||
+        String(data.minimum_tax_area).trim() === ""
+        ? "OTHER_AREA"
+        : String(data.minimum_tax_area).trim().toUpperCase();
+
+    const isNewTaxpayer =
+      data.is_new_taxpayer === true ||
+      data.is_new_taxpayer === 1 ||
+      data.is_new_taxpayer === "true" ||
+      data.is_new_taxpayer === "1";
+
+    // physically challenged
+    if (typeof data.is_physically_challenged !== "boolean") {
+      data.is_physically_challenged = Boolean(data.is_physically_challenged);
+    }
+
+    const disabledChildDependents =
+      data.disabled_child_dependents === undefined ||
+        data.disabled_child_dependents === null ||
+        data.disabled_child_dependents === ""
+        ? 0
+        : Number(data.disabled_child_dependents);
+
+    if (
+      !Number.isInteger(disabledChildDependents) ||
+      disabledChildDependents < 0
+    ) {
+      throw new Error(
+        "disabled_child_dependents must be a non-negative integer",
+      );
+    }
+
+    // freedom fighter
+    if (typeof data.is_freedom_fighter !== "boolean") {
+      data.is_freedom_fighter = Boolean(data.is_freedom_fighter);
+    }
+
+    // july warrior
+    if (typeof data.is_july_warrior !== "boolean") {
+      data.is_july_warrior = Boolean(data.is_july_warrior);
+    }
+
+    // net wealth
+    const netWealth =
+      data.net_wealth === undefined ||
+      data.net_wealth === null ||
+      data.net_wealth === ""
+        ? 0
+        : Math.max(0, Number(data.net_wealth));
+
+    if (!Number.isFinite(netWealth)) {
+      throw new Error("net_wealth must be a valid number");
+    }
+
+    // surcharge triggers
+    const hasMultipleMotorVehicles =
+      data.has_multiple_motor_vehicles === true ||
+      data.has_multiple_motor_vehicles === 1 ||
+      data.has_multiple_motor_vehicles === "true" ||
+      data.has_multiple_motor_vehicles === "1";
+
+    const hasLargeHouseProperty =
+      data.has_large_house_property === true ||
+      data.has_large_house_property === 1 ||
+      data.has_large_house_property === "true" ||
+      data.has_large_house_property === "1";
+
+    // tax credits: TDS & Advance Tax
+    const tdsAmount =
+      data.tds_amount === undefined ||
+      data.tds_amount === null ||
+      data.tds_amount === ""
+        ? 0
+        : Math.max(0, Number(data.tds_amount));
+
+    if (!Number.isFinite(tdsAmount)) {
+      throw new Error("tds_amount must be a valid number");
+    }
+
+    const advanceTaxAmount =
+      data.advance_tax_amount === undefined ||
+      data.advance_tax_amount === null ||
+      data.advance_tax_amount === ""
+        ? 0
+        : Math.max(0, Number(data.advance_tax_amount));
+
+    if (!Number.isFinite(advanceTaxAmount)) {
+      throw new Error("advance_tax_amount must be a valid number");
+    }
+
+    // return validated data
+    return {
+      date_of_birth: data.date_of_birth,
+      gender: gender,
+      minimum_tax_area: minimumTaxArea,
+      is_new_taxpayer: isNewTaxpayer,
+      is_physically_challenged: data.is_physically_challenged,
+      disabled_child_dependents: disabledChildDependents,
+      is_freedom_fighter: data.is_freedom_fighter,
+      is_july_warrior: data.is_july_warrior,
+      net_wealth: netWealth,
+      has_multiple_motor_vehicles: hasMultipleMotorVehicles,
+      has_large_house_property: hasLargeHouseProperty,
+      tds_amount: tdsAmount,
+      advance_tax_amount: advanceTaxAmount,
+    };
+  },
+};
+
+module.exports = TaxpayerProfileService;
