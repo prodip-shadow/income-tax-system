@@ -185,7 +185,11 @@ const TaxDeductions = () => {
 
       const data = Array.isArray(response?.data) ? response.data : [];
 
-      setInvestments(data);
+      const sortedData = [...data].sort(
+        (a, b) => (Number(b.id) || 0) - (Number(a.id) || 0)
+      );
+
+      setInvestments(sortedData);
 
       const total = data.reduce(
         (sum, item) => sum + Number(item.amount || 0),
@@ -791,6 +795,10 @@ const TaxDeductions = () => {
                   <thead>
                     <tr className="border-b border-slate-100 bg-slate-50/70 text-left">
                       <th className="px-5 py-3 text-xs font-medium uppercase tracking-wide text-slate-500">
+                        SL
+                      </th>
+
+                      <th className="px-5 py-3 text-xs font-medium uppercase tracking-wide text-slate-500">
                         Investment
                       </th>
 
@@ -813,11 +821,15 @@ const TaxDeductions = () => {
                   </thead>
 
                   <tbody className="divide-y divide-slate-100">
-                    {investments.map((investment) => (
+                    {investments.map((investment, index) => (
                       <tr
                         key={investment.id}
                         className="transition hover:bg-slate-50/70"
                       >
+                        <td className="px-5 py-4 text-sm text-slate-500">
+                          {index + 1}
+                        </td>
+
                         <td className="px-5 py-4">
                           <p className="text-sm font-medium text-slate-900">
                             {getInvestmentName(investment.deduction_code)}

@@ -67,6 +67,22 @@ const TAXPAYER_CATEGORIES = [
 
 // mirrors the backend determinecategory() priority.
 
+const calculateAge = (dobString) => {
+  if (!dobString) return null;
+  const dob = new Date(dobString);
+  if (Number.isNaN(dob.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const monthDiff = today.getMonth() - dob.getMonth();
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < dob.getDate())
+  ) {
+    age--;
+  }
+  return age;
+};
+
 const isFlagActive = (val) => {
   if (val === true || val === "true") return true;
   if (val === false || val === "false") return false;
@@ -86,6 +102,12 @@ const deriveCategoryFromProfile = (data) => {
     return "PHYSICALLY_CHALLENGED";
   }
 
+  // Senior citizen requires age >= 65
+  const age = calculateAge(data.date_of_birth);
+  if (age !== null && age >= 65) {
+    return "SENIOR_CITIZEN";
+  }
+
   const gender = String(data.gender || "").trim().toUpperCase();
 
   if (
@@ -102,27 +124,6 @@ const deriveCategoryFromProfile = (data) => {
     gender === "WOMAN"
   ) {
     return "WOMEN";
-  }
-
-  // senior citizen requires age >= 65.
-  // we check date_of_birth here for display only.
-  if (data.date_of_birth) {
-    const dob = new Date(data.date_of_birth);
-    const today = new Date();
-    let age =
-      today.getFullYear() - dob.getFullYear();
-    const monthDiff =
-      today.getMonth() - dob.getMonth();
-    if (
-      monthDiff < 0 ||
-      (monthDiff === 0 &&
-        today.getDate() < dob.getDate())
-    ) {
-      age--;
-    }
-    if (age >= 65) {
-      return "SENIOR_CITIZEN";
-    }
   }
 
   return "GENERAL";
@@ -244,6 +245,7 @@ const Profile = () => {
           Boolean(data.is_new_taxpayer),
 
         taxpayer_category:
+          data.taxpayer_category ||
           deriveCategoryFromProfile(data),
 
         disabled_child_dependents:
@@ -359,13 +361,109 @@ const Profile = () => {
       checked,
     } = event.target;
 
+    const val = type === "checkbox" ? checked : value;
+
+    if (name === "date_of_birth") {
+      setFormData((previousData) => {
+        const newDob = val;
+        const age = calculateAge(newDob);
+        const isSpecialCategory = [
+          "WAR_WOUNDED_FREEDOM_FIGHTER",
+          "JULY_WARRIOR",
+          "PHYSICALLY_CHALLENGED",
+        ].includes(previousData.taxpayer_category);
+
+        let newCategory = previousData.taxpayer_category;
+        if (!isSpecialCategory) {
+          if (age !== null && age >= 65) {
+            newCategory = "SENIOR_CITIZEN";
+          } else if (previousData.taxpayer_category === "SENIOR_CITIZEN" || !previousData.taxpayer_category) {
+            if (previousData.gender === "FEMALE") {
+              newCategory = "WOMEN";
+            } else if (previousData.gender === "THIRD_GENDER") {
+              newCategory = "THIRD_GENDER";
+            } else {
+              newCategory = "GENERAL";
+            }
+          } else if (previousData.gender === "FEMALE") {
+            newCategory = "WOMEN";
+          }
+        }
+
+        return {
+          ...previousData,
+          date_of_birth: newDob,
+          taxpayer_category: newCategory,
+        };
+      });
+      return;
+    }
+
+    if (name === "gender") {
+      setFormData((previousData) => {
+        const newGender = val;
+        const age = calculateAge(previousData.date_of_birth);
+        const isSpecialCategory = [
+          "WAR_WOUNDED_FREEDOM_FIGHTER",
+          "JULY_WARRIOR",
+          "PHYSICALLY_CHALLENGED",
+        ].includes(previousData.taxpayer_category);
+
+        let newCategory = previousData.taxpayer_category;
+        if (!isSpecialCategory) {
+          if (age !== null && age >= 65) {
+            newCategory = "SENIOR_CITIZEN";
+          } else if (newGender === "FEMALE") {
+            newCategory = "WOMEN";
+          } else if (newGender === "THIRD_GENDER") {
+            newCategory = "THIRD_GENDER";
+          } else if (newGender === "MALE") {
+            newCategory = "GENERAL";
+          }
+        }
+
+        return {
+          ...previousData,
+          gender: newGender,
+          taxpayer_category: newCategory,
+        };
+      });
+      return;
+    }
+
+    if (name === "taxpayer_category") {
+      const newCategory = val;
+      setFormData((previousData) => {
+        let newGender = previousData.gender;
+        if (newCategory === "WOMEN") {
+          newGender = "FEMALE";
+        } else if (newCategory === "THIRD_GENDER") {
+          newGender = "THIRD_GENDER";
+        } else if (newCategory === "GENERAL" && previousData.gender === "FEMALE") {
+          newGender = "MALE";
+        }
+
+        return {
+          ...previousData,
+          taxpayer_category: newCategory,
+          gender: newGender,
+        };
+      });
+
+      if (newCategory === "SENIOR_CITIZEN") {
+        const age = calculateAge(formData.date_of_birth);
+        if (age === null) {
+          toast("Please enter your Date of Birth to verify Senior Citizen eligibility (age 65+).", { icon: "ℹ️" });
+        } else if (age < 65) {
+          toast.error(`Calculated age is ${age}. Senior Citizen category requires age 65 or above.`);
+        }
+      }
+      return;
+    }
+
     setFormData((previousData) => ({
       ...previousData,
-
-      [name]:
-        type === "checkbox"
-          ? checked
-          : value,
+      [name]: val,
     }));
   };
 
@@ -441,13 +539,36 @@ const Profile = () => {
       return;
     }
 
+    // Senior citizen validation
+    if (formData.taxpayer_category === "SENIOR_CITIZEN") {
+      const age = calculateAge(formData.date_of_birth);
+      if (age === null || age < 65) {
+        toast.error(
+          `Senior Citizen category requires age 65 or above (current calculated age: ${age !== null ? age : 0}). Please adjust Date of Birth or choose another category.`
+        );
+        return;
+      }
+    }
+
+    // Ensure gender sync
+    let submissionGender = formData.gender;
+    if (formData.taxpayer_category === "WOMEN") {
+      submissionGender = "FEMALE";
+    } else if (formData.taxpayer_category === "THIRD_GENDER") {
+      submissionGender = "THIRD_GENDER";
+    } else if (formData.taxpayer_category === "GENERAL" && submissionGender === "FEMALE") {
+      submissionGender = "MALE";
+    }
 
     const payload = {
       date_of_birth:
         formData.date_of_birth,
 
       gender:
-        formData.gender,
+        submissionGender,
+
+      taxpayer_category:
+        formData.taxpayer_category,
 
       minimum_tax_area:
         formData.minimum_tax_area || "OTHER_AREA",
@@ -546,6 +667,7 @@ const Profile = () => {
         Boolean(profile.is_new_taxpayer),
 
       taxpayer_category:
+        profile.taxpayer_category ||
         deriveCategoryFromProfile(profile),
 
       disabled_child_dependents:
@@ -893,6 +1015,22 @@ const Profile = () => {
 
                 </div>
 
+                {formData.date_of_birth && calculateAge(formData.date_of_birth) !== null && (
+                  <div className="mt-1.5 flex items-center gap-2 text-xs text-slate-500">
+                    <span>
+                      Calculated Age:{" "}
+                      <strong className="text-slate-800">
+                        {calculateAge(formData.date_of_birth)} years
+                      </strong>
+                    </span>
+                    {calculateAge(formData.date_of_birth) >= 65 && (
+                      <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                        Senior Citizen (65+)
+                      </span>
+                    )}
+                  </div>
+                )}
+
               </div>
 
 
@@ -1126,8 +1264,7 @@ const Profile = () => {
               </select>
 
               <p className="mt-1.5 text-xs text-slate-400">
-                Select the taxpayer category
-                that applies to you.
+                Select the taxpayer category that applies to you. Automatically selects Women for female taxpayers and Senior Citizen for age 65+.
               </p>
 
             </div>
@@ -1390,14 +1527,24 @@ const Profile = () => {
                   Date of Birth
                 </p>
 
-                <p className="mt-1 text-sm font-medium text-slate-900">
-
-                  {profile?.date_of_birth
-                    ? String(
-                      profile.date_of_birth,
-                    ).slice(0, 10)
-                    : ""}
-
+                <p className="mt-1 flex items-center gap-2 text-sm font-medium text-slate-900">
+                  <span>
+                    {profile?.date_of_birth
+                      ? String(
+                        profile.date_of_birth,
+                      ).slice(0, 10)
+                      : ""}
+                  </span>
+                  {profile?.date_of_birth && calculateAge(profile.date_of_birth) !== null && (
+                    <span className="text-xs font-normal text-slate-500">
+                      ({calculateAge(profile.date_of_birth)} years old)
+                    </span>
+                  )}
+                  {profile?.date_of_birth && calculateAge(profile.date_of_birth) >= 65 && (
+                    <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                      Senior Citizen (65+)
+                    </span>
+                  )}
                 </p>
 
               </div>
@@ -1512,6 +1659,7 @@ const Profile = () => {
                 <p className="mt-1 text-sm font-medium text-slate-900">
 
                   {formatCategory(
+                    profile?.taxpayer_category ||
                     deriveCategoryFromProfile(
                       profile,
                     ),

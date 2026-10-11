@@ -87,10 +87,7 @@ const YearwiseTaxRules = () => {
       <Container>
         {/* Section Header */}
         <div className="mx-auto max-w-3xl text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1 text-xs font-semibold text-emerald-800 shadow-xs">
-            <ShieldCheck className="h-4 w-4 text-emerald-600" />
-            Live Statutory Regulations
-          </div>
+
 
           <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
             Year-Wise Bangladesh Income Tax Rules
@@ -288,16 +285,7 @@ const YearwiseTaxRules = () => {
                     </table>
                   </div>
 
-                  {/* Clarification Box */}
-                  <div className="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-xs text-blue-900">
-                    <Info className="h-5 w-5 shrink-0 text-blue-600 mt-0.5" />
-                    <div>
-                      <p className="font-semibold text-blue-900">How Progressive Tax Works:</p>
-                      <p className="mt-0.5 text-blue-800">
-                        Tax is not charged on your entire income at a single rate. Rather, your income is segmented into slabs. For instance, the first slab is completely 0% (tax-free). Subsequent portions are taxed at 5% / 10%, 15%, 20%, 25%, and up to 30% only on the amount exceeding each bracket.
-                      </p>
-                    </div>
-                  </div>
+              
                 </div>
               )}
 

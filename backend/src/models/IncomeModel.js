@@ -59,7 +59,7 @@ const IncomeModel = {
         updated_at
       FROM income
       WHERE user_id = ?
-      ORDER BY income_date DESC, id DESC
+      ORDER BY id DESC
     `;
 
     const rows = await query(sql, [userId]);

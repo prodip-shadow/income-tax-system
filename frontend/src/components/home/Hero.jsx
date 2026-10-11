@@ -8,15 +8,12 @@ const Hero = () => {
     <section className="border-b border-slate-200 bg-white">
       <Container className="py-16 sm:py-20 lg:py-24">
         <div className="mx-auto max-w-4xl text-center">
-          {/* Badge */}
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-700">
-            <ShieldCheck className="h-4 w-4 text-emerald-600" />
-            Bangladesh Income Tax Calculation System
-          </div>
+
+
 
           {/* Heading */}
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
-            Calculate Your Income Tax with Confidence
+            Calculate Your Income Tax
           </h1>
 
           {/* Description */}
@@ -28,18 +25,18 @@ const Hero = () => {
 
           {/* Actions */}
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-            <Button size="lg" className="h-12 px-6 text-base" asChild>
-              <Link to="/dashboard/tax-calculation">
-                <Calculator className="mr-2 h-5 w-5" />
+            <Button size="lg" className="h-12  px-6 text-base flex items-center " asChild>
+              <Link to="/dashboard/tax-calculation"  className='inline-flex items-center'>
+                <Calculator className="mr-2 h-6 w-6" />
                 Calculate Tax
               </Link>
             </Button>
 
             <Button variant="outline" size="lg" className="h-12 px-6 text-base" asChild>
-              <a href="#how-it-works">
+              <Link to="#how-it-works" className='inline-flex items-center'>
                 <FileText className="mr-2 h-5 w-5" />
                 How It Works
-              </a>
+              </Link>
             </Button>
           </div>
         </div>

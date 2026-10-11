@@ -52,11 +52,15 @@ const Income = () => {
       const response =
         await IncomeService.getMyIncome();
 
-      setIncomes(
-        Array.isArray(response?.data)
-          ? response.data
-          : []
+      const data = Array.isArray(response?.data)
+        ? response.data
+        : [];
+
+      const sortedData = [...data].sort(
+        (a, b) => (Number(b.id) || 0) - (Number(a.id) || 0)
       );
+
+      setIncomes(sortedData);
     } catch (error) {
       console.error("Get Income Error:", error);
 

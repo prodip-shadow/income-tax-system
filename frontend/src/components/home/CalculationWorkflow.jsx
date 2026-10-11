@@ -146,10 +146,7 @@ const CalculationWorkflow = () => {
       <Container>
         {/* Section Header */}
         <div className="mx-auto max-w-3xl text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1 text-xs font-semibold text-slate-700 shadow-2xs">
-            <Sparkles className="h-4 w-4 text-emerald-600" />
-            Automated 6-Stage Computation Pipeline
-          </div>
+
 
           <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
             How the Tax Calculation Works
@@ -246,9 +243,7 @@ const CalculationWorkflow = () => {
             {/* Visual Process Pipeline Bar */}
             <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-6 sm:p-8">
               <div className="text-center">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Sequential Execution Flow
-                </span>
+              
                 <h4 className="mt-1 text-base font-bold text-slate-800">
                   How Raw Income Transforms Into Final Tax
                 </h4>

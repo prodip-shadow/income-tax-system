@@ -18,7 +18,7 @@ const CTA = () => {
 
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Button size="lg" className="h-12 px-6 text-base bg-white text-slate-900 hover:bg-slate-100" asChild>
-              <Link to="/dashboard/tax-calculation">
+              <Link to="/dashboard/tax-calculation" className='inline-flex items-center'>
                 <Calculator className="mr-2 h-5 w-5 text-slate-900" />
                 Start Tax Calculation
                 <ArrowRight className="ml-2 h-4 w-4" />

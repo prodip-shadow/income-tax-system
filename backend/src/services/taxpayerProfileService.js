@@ -40,7 +40,14 @@ const TaxpayerProfileService = {
       throw new Error("User ID is required");
     }
 
-    return await TaxpayerProfileModel.getProfileByUserId(userId);
+    const rows = await TaxpayerProfileModel.getProfileByUserId(userId);
+    if (rows && rows.length > 0) {
+      const TaxCalculationService = require("./taxCalculationService");
+      const category = TaxCalculationService.determineCategory(rows[0], new Date());
+      rows[0].taxpayer_category = category;
+      rows[0].category = category;
+    }
+    return rows;
   },
 
 
@@ -92,15 +99,56 @@ const TaxpayerProfileService = {
     }
 
 
-    if (
-      data.gender === undefined ||
-      data.gender === null ||
-      String(data.gender).trim() === ""
-    ) {
-      throw new Error("Gender is required");
+    let gender = (data.gender !== undefined && data.gender !== null)
+      ? String(data.gender).trim().toUpperCase()
+      : "";
+
+    // Sync gender & flags if taxpayer_category is provided
+    if (data.taxpayer_category) {
+      const category = String(data.taxpayer_category).trim().toUpperCase();
+      if (category === "WOMEN") {
+        gender = "FEMALE";
+      } else if (category === "THIRD_GENDER") {
+        gender = "THIRD_GENDER";
+      } else if (category === "GENERAL" && gender === "FEMALE") {
+        gender = "MALE";
+      }
+
+      if (category === "WAR_WOUNDED_FREEDOM_FIGHTER") {
+        data.is_freedom_fighter = true;
+        data.is_july_warrior = false;
+        data.is_physically_challenged = false;
+      } else if (category === "JULY_WARRIOR") {
+        data.is_july_warrior = true;
+        data.is_freedom_fighter = false;
+        data.is_physically_challenged = false;
+      } else if (category === "PHYSICALLY_CHALLENGED") {
+        data.is_physically_challenged = true;
+        data.is_freedom_fighter = false;
+        data.is_july_warrior = false;
+      } else if (["GENERAL", "WOMEN", "SENIOR_CITIZEN", "THIRD_GENDER"].includes(category)) {
+        data.is_freedom_fighter = false;
+        data.is_july_warrior = false;
+        data.is_physically_challenged = false;
+      }
+
+      if (category === "SENIOR_CITIZEN") {
+        const dob = new Date(data.date_of_birth);
+        const refToday = new Date();
+        let age = refToday.getFullYear() - dob.getFullYear();
+        const mDiff = refToday.getMonth() - dob.getMonth();
+        if (mDiff < 0 || (mDiff === 0 && refToday.getDate() < dob.getDate())) {
+          age--;
+        }
+        if (age < 65) {
+          throw new Error("Senior Citizen category requires age 65 or above");
+        }
+      }
     }
 
-    const gender = String(data.gender).trim().toUpperCase();
+    if (!gender) {
+      throw new Error("Gender is required");
+    }
 
     const allowedGenders = [
       "MALE",

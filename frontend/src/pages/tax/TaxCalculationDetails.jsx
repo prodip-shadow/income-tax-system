@@ -105,7 +105,7 @@ const TaxCalculationDetails = ({
         calculation={calculation}
         onClose={handleClose}
         showCloseButton={true}
-        title="Stored Tax Calculation Details"
+        title=" Tax Calculation Details"
       />
     </div>
   );

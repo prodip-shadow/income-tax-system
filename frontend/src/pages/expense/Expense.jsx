@@ -51,11 +51,15 @@ const Expense = () => {
       const response =
         await ExpenseService.getMyExpense();
 
-      setExpenses(
-        Array.isArray(response?.data)
-          ? response.data
-          : [],
+      const data = Array.isArray(response?.data)
+        ? response.data
+        : [];
+
+      const sortedData = [...data].sort(
+        (a, b) => (Number(b.id) || 0) - (Number(a.id) || 0)
       );
+
+      setExpenses(sortedData);
     } catch (error) {
       console.error(
         "Get Expense Error:",

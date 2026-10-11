@@ -51,7 +51,7 @@ const TaxDeductionModel = {
                 updated_at
             FROM tax_deductions
             WHERE user_id = ?
-            ORDER BY deduction_date DESC, id DESC
+            ORDER BY id DESC
         `;
 
         return await db.query(sql, [userId]);
@@ -80,7 +80,7 @@ const TaxDeductionModel = {
             FROM tax_deductions
             WHERE user_id = ?
               AND tax_year = ?
-            ORDER BY deduction_date DESC, id DESC
+            ORDER BY id DESC
         `;
 
         return await db.query(

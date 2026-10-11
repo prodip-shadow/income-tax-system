@@ -159,28 +159,7 @@ const TaxCalculationService = {
       return "PHYSICALLY_CHALLENGED";
     }
 
-    // third gender
-
-    if (
-      gender === "THIRD_GENDER" ||
-      gender === "THIRD GENDER" ||
-      gender === "THIRD"
-    ) {
-      return "THIRD_GENDER";
-    }
-
-    // women
-
-    if (
-      gender === "FEMALE" ||
-      gender === "WOMEN" ||
-      gender === "WOMAN"
-    ) {
-      return "WOMEN";
-    }
-
-    // senior citizen
-
+    // senior citizen (age >= 65)
     const age = this.calculateAge(
       profile.date_of_birth,
       taxYearEndDate,
@@ -190,8 +169,25 @@ const TaxCalculationService = {
       return "SENIOR_CITIZEN";
     }
 
-    // general
+    // third gender
+    if (
+      gender === "THIRD_GENDER" ||
+      gender === "THIRD GENDER" ||
+      gender === "THIRD"
+    ) {
+      return "THIRD_GENDER";
+    }
 
+    // women
+    if (
+      gender === "FEMALE" ||
+      gender === "WOMEN" ||
+      gender === "WOMAN"
+    ) {
+      return "WOMEN";
+    }
+
+    // general
     return "GENERAL";
   },
 

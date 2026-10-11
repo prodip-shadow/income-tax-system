@@ -164,7 +164,6 @@ const ExpenseModel = {
             WHERE e.user_id = ?
 
             ORDER BY
-                e.expense_date DESC,
                 e.id DESC
         `;
 
